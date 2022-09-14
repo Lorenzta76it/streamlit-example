@@ -1,38 +1,26 @@
-from collections import namedtuple
-import altair as alt
-import math
-import pandas as pd
+from unittest import result
 import streamlit as st
+from snowflake.snowpark.functions import *
+from snowflake.snowpark import Session
+from snowflake.snowpark.types import IntegerType
+from snowflake.snowpark.types import Variant
+import snowflake.snowpark.functions as F
 
-"""
-# Welcome to Streamlit!
+from config import snowflake_conn_prop
+session = Session.builder.configs(snowflake_conn_prop).create()
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:
+oag_schedule_df = session.table("OAG_SCHEDULE").limit(10)
+oag_schedule_df = oag_schedule_df.select("*", sql_expr("DEPCTRY || '_' || DEP_PORT_CD_ICAO AS rep_airp"))
 
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+aerospace_data_atlas_df = session.table('"AEROSPACE_DATA_ATLAS"."AEROSPACE"."avia_paoa-20200501"').select("*").limit(10)
+st.write(aerospace_data_atlas_df.to_pandas())
+aerospace_data_atlas_filtered_df = aerospace_data_atlas_df \
+  .filter(aerospace_data_atlas_df.col('"tra_cov"') == lit("TOTAL"))\
+  .filter(aerospace_data_atlas_df.col('"schedule"') == lit("TOT"))\
+  .filter(aerospace_data_atlas_df.col('"tra_meas"') == lit("PAS_BRD"))\
+  .filter(aerospace_data_atlas_df.col('"Date"') == lit("2021-09-01"))
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
 
-
-with st.echo(code_location='below'):
-    total_points = st.slider("Number of points in spiral", 1, 5000, 2000)
-    num_turns = st.slider("Number of turns in spiral", 1, 100, 9)
-
-    Point = namedtuple('Point', 'x y')
-    data = []
-
-    points_per_turn = total_points / num_turns
-
-    for curr_point_num in range(total_points):
-        curr_turn, i = divmod(curr_point_num, points_per_turn)
-        angle = (curr_turn + 1) * 2 * math.pi * i / points_per_turn
-        radius = curr_point_num / total_points
-        x = radius * math.cos(angle)
-        y = radius * math.sin(angle)
-        data.append(Point(x, y))
-
-    st.altair_chart(alt.Chart(pd.DataFrame(data), height=500, width=500)
-        .mark_circle(color='#0068c9', opacity=0.5)
-        .encode(x='x:Q', y='y:Q'))
+st.write(oag_schedule_df.to_pandas())
+result = oag_schedule_df.join(aerospace_data_atlas_filtered_df, "left", oag_schedule_df.col("rep_airp") == aerospace_data_atlas_df.col('"rep_airp"'))
+st.write(result.to_pandas())
