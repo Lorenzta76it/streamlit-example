@@ -1,6 +1,5 @@
 from unittest import result
 import streamlit as st
-from snowflake.snowpark.functions import *
 from snowflake.snowpark import Session
 from snowflake.snowpark.types import IntegerType
 from snowflake.snowpark.types import Variant
