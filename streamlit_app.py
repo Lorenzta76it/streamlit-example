@@ -5,7 +5,7 @@ from snowflake.snowpark.types import IntegerType
 from snowflake.snowpark.types import Variant
 import snowflake.snowpark.functions as F
 
-from config import snowflake_conn_prop
+#from config import snowflake_conn_prop
 session = Session.builder.configs(snowflake_conn_prop).create()
 
 oag_schedule_df = session.table("OAG_SCHEDULE").limit(10)
