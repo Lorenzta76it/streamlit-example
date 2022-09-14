@@ -1,4 +1,5 @@
+python==3.8
 altair
 pandas
 streamlit
-snowpark
+snowflake-snowpark-python==0.7.0
